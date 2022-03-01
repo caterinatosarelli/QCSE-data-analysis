@@ -3,8 +3,6 @@ import pandas as pd
 import argparse
 import matplotlib.pyplot as plt
 from scipy.optimize import curve_fit
-import sys
-sys.path.append('C:/Users/catet_ch27s6d/OneDrive/Desktop/Software/')
 import Functions as func
 import Clickfind as click
 
