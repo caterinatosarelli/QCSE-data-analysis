@@ -16,9 +16,6 @@ def volt(N, Vmin, Vmax, Vbi, d):
     
     return voltage_values, field_values, DelV
 
-#ricordati di chiedere a nico se ha senso fare sti due passaggi o se ha piu senso
-#immettere direttamente l'input nella funzione
-
 #%% function to import and read dataset
 
 def read_data(import_dir, data_filename):
