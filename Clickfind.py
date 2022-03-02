@@ -1,23 +1,31 @@
-
 import numpy as np
 import matplotlib.pyplot as plt
 
-# functions that allow to save coordinates of the point 
-# you click on with the mouse and print them
-# to interact with the figure you need to set:
-# tools/preferences/graphics to be QT5 not inline
+# Functions that allow to save coordinates of the point 
+# one clicks on with the mouse and print them.
+# To interact with the figure one needs to set:
+# Tools/Preferences/Graphics to be QT5 not inline
 
 def findY(f,ax,matrix):
-    
-    """This function allows to choose the peak to be fitted by clicking on its 
+    """
+    This function allows to choose the peak to be fitted by clicking on its 
     sides.
     
-    Parameters:
-        f: figure to be clicked on
-        ax: axis along which the points will be picked
-        matrix: 
+    Parameters
+    ----------
+    f : figure to be clicked on.
+    ax : axis along which the points will be picked.
+    matrix : matrix of the data 
+
+    Returns
+    -------
+    Zoom_matrix : matrix reduced in the limits chosen by the user.
+    Zlim1 : left side of the peak.
+    Zlim2 : right side of the peak.
+
     """
-    print('open figure and click WIDELY on either side of peak of interest')
+   
+    print('Open the figure and click widely on either side of peak of interest.')
     
     def pickY(event):
         ymouse = event.ydata # takes y coordinate of the point clicked
@@ -45,18 +53,24 @@ def findY(f,ax,matrix):
     return Zoom_matrix, ZLim1, ZLim2
 
 def findX(f,ax):
+    """
+    This function allows to select the voltage range on which we want to 
+        perform the fit by picking two points on the figure.
+    
+    Parameters
+    ----------
+    f : figure on which point are picked.
+    ax : array of voltage values.
+
+    Returns
+    -------
+    VLimLow : index of lowest voltage value selected
+    VLimHi : index of highest voltage value selected.
+
+    """
 
     def pickX(event):
-        
-        """This function allows to select the voltage range on which we want to 
-        perform the fit by picking two points on the figure.
-        
-        Parameters:
-            f : figure on which point are picked
-            
-        Returns: 
-            voltage range limits
-        """
+    
         xmouse = event.xdata #takes x coordinate of the point clicked
         print ('x of mouse: {:.2f}'.format(xmouse))
         times.append(xmouse)
@@ -65,7 +79,7 @@ def findX(f,ax):
         return times
     
     times=[]     
-    print('open figure and click on two points to define the voltage range you want to fit')
+    print('Open the figure and click on two points to define the voltage range you want to fit.')
     cid=f.canvas.mpl_connect('button_press_event',pickX)
     while len(times)<2:
         plt.pause(5)
@@ -78,3 +92,4 @@ def findX(f,ax):
     VLimHi = np.where(ax>=VLim2)[0][0] 
 
     return VLimLow, VLimHi
+
