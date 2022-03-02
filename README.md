@@ -39,7 +39,7 @@ To start the analysis the user needs to call main.py giving as input :
 - minimum voltage value used
 - maximum voltage value used
 - built-in voltage of the pin diode
-- thickness of the intrinsic region of the diode
+- thickness of the intrinsic region of the diode (in nm)
 - path to data
 - data filename
 - grid filename
