@@ -6,7 +6,7 @@ from scipy.optimize import curve_fit
 # Function to create voltage array to be used as axis
 def volt(N_val, Vmin, Vmax):
     """
-    This method creates the voltage values used during the voltage sweep.
+    This function creates the voltage values used during the voltage sweep.
 
     Parameters
     ----------
@@ -31,7 +31,7 @@ def volt(N_val, Vmin, Vmax):
 # Function to import and read the dataset
 def read_data(import_dir, data_filename):
     """ 
-    This method creates the data frames reading from txt files.
+    This function creates the data frames reading from txt files.
     
     Parameters
     ----------
@@ -55,7 +55,7 @@ def read_data(import_dir, data_filename):
 # Gaussian function
 def gaussian_gen(x,Amp,sig,mu,Bg):
     """
-    This method creates a Gaussian function.
+    This function creates a Gaussian function.
 
     Parameters
     ----------
@@ -71,7 +71,7 @@ def gaussian_gen(x,Amp,sig,mu,Bg):
 # Quadratic function
 def polynom2(x,a0,a1,a2):
     """
-    This method creates a parabolic function.
+    This function creates a parabolic function.
 
     Parameters
     ----------
@@ -132,7 +132,7 @@ def map_plot(Matrix,Fig,X,Y,Xmin,Xmax,Ymin,Ymax,Imin,Imax,Xlabel,Ylabel):
 
 def fit_loop(Izero, voltage, VLim, params, spectrum, matrix, forward):
     """
-    This method performs a gaussian fit on each spectrum present in the matrix 
+    This function performs a gaussian fit on each spectrum present in the matrix 
     of the voltage sweep using a loop on the voltage range selected.
 
     Parameters
