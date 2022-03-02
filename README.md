@@ -10,6 +10,8 @@ where F is the applied field, obtained from the voltage using
 
 <img src="https://latex.codecogs.com/svg.image?F&space;=&space;-&space;\frac{\left&space;(&space;V&space;-&space;Vbi&space;\right&space;)}{d}" title="F = - \frac{\left ( V - Vbi \right )}{d}" />
 
+Vbi being the built-in voltage of the junction and d the thickness of the intrinsic region.
+
 The code is meant to receive two datasets:
 
 1. The intensity map recorded while varying the voltage: each column is correspond to a PL spectrum taken at a certain voltage value.
