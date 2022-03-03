@@ -128,77 +128,77 @@ def map_plot(Matrix,Fig,X,Y,Xmin,Xmax,Ymin,Ymax,Imin,Imax,Xlabel,Ylabel):
 
     return fig
 
-#%% fitting loop
+#%%
+def peak_lim(wav, peak_pos, sigma) : 
 
+    pos = np.where(wav>=1239.8/peak_pos)[0][0]
+    delta = -10 * (np.where(wav>=1239.8/(peak_pos+sigma))[0][0] - pos)
+    lim1 = pos - delta
+    lim2 = pos + delta
+    
+    return pos, lim1, lim2
+#%%
+def direction(forward, Izero, voltage, vlim, i):
+   
+    if forward:
+        v_index = Izero+i+1
+        vi = voltage[v_index]
+        end = vi>(np.round(voltage[vlim],2))
+
+    else:
+        v_index = Izero-i-1
+        vi = voltage[v_index]
+        end = vi<(np.round(voltage[vlim],2))
+        
+    return v_index, vi, end
+    
+#%%        
 def fit_loop(Izero, voltage, VLim, params, spectrum, matrix, forward):
-    """
-    This function performs a gaussian fit on each spectrum present in the matrix 
-    of the voltage sweep using a loop on the voltage range selected.
-
-    Parameters
-    ----------
-    Izero : index of the voltage of the starting point 
-    voltage : voltage values used
-    VLim : limit of the voltage range on which the fit will be performed
-    params : starting parameters for gaussian fit
-    spectrum : dataframe from which wavelength and energy values are taken
-    matrix : data of the spectrum during voltage sweep
-    forward : boolean variable to set direction of the loop
-
-    Returns
-    -------
-    table : dataframe with results of gaussian fit for each spectrum in matrix
-
-    """
     
     v0 = voltage[Izero]
     Wav = spectrum[:,0]
     En = spectrum[:,1]
     
-    LimC0 = np.where(Wav>=1239.8/params[2])[0][0] 
-    # sets midi as the position of the mean from the first fit
+    A, sigma, mu, bg = params
+
+    LimC0 = peak_lim(Wav, mu, 0)[0]
     midi = En[LimC0] 
-    fit_vals=[[params[0],params[1],params[2],params[3],midi,v0]]
+    fit_vals=[[A,sigma,mu,bg,midi,v0]]
     columns_name = ('A','sigma','mu','Bg','mid','vfit')
     table = pd.DataFrame(fit_vals, columns=columns_name)
 
     for i in range(len(voltage)):
-        if forward:
-            v_index = Izero+i+1
-            vi = voltage[v_index]
-            end = vi>(np.round(voltage[VLim],2))
-        else:
-            v_index = Izero-i-1
-            vi = voltage[v_index]
-            end = vi<(np.round(voltage[VLim],2))
-        if end:
+        
+        v_index, vi, end = direction(forward, Izero, voltage, VLim, i)
+        
+        if end :
             print('End of selected voltage range')
             break
-        else:
+        else : 
+            # to avoid division by 0
+            if table['mu'][i]==0.:
+                midi = table['mid'][i]
+            else:
+                midi = table['mu'][i]
             try:
-                if table['mu'][i]==0.:
-                    midi = table['mid'][i]
-                else:
-                    midi = table['mu'][i]
-                # at every cycle the position of the peak is updated with the mean from the previous fit
-                LimC0 = np.where(Wav>=1239.8/midi)[0][0]
-                LimDel = -10*(np.where(Wav>=1239.8/(midi+table['sigma'][i]))[0][0] - LimC0)
-                Lim1 = LimC0 - LimDel
-                Lim2 = LimC0 + LimDel
+                # redefines energy range of the peak to be fitted
+                Lim1 = peak_lim(Wav,midi,table['sigma'][i])[1]
+                Lim2 = peak_lim(Wav,midi,table['sigma'][i])[2]
                 Gauss_fit = curve_fit(gaussian_gen,En[Lim1:Lim2],matrix[Lim1:Lim2,v_index],
-                            p0=(table['A'][i],table['sigma'][i],midi,0),
-                            )
+                                      p0=(table['A'][i],table['sigma'][i],midi,0),
+                                      )
                 parsi = Gauss_fit[0]
-                midi = En[Lim1+np.argmax(matrix[Lim1:Lim2,v_index])]
-                parsi = np.append(parsi,[midi,vi]).reshape(1,6)
-                dfi = pd.DataFrame(parsi, columns = columns_name)
-                table = pd.concat([table, dfi]).reset_index(drop=True)
-               
-            except RuntimeError:
-                # if the fit is not performed, it takes the position of the highest intensity as peak
+                
+            except RuntimeError: 
                 print(vi,'V error in fit - just use peak')
-                midi = En[Lim1+np.argmax(matrix[Lim1:Lim2,v_index])]
-                dfi = pd.DataFrame([[0,0,0,0,midi,v0]], columns = columns_name)
-                table = pd.concat([table, dfi]).reset_index(drop=True)
+                parsi = [0,0,0,0]
+            
+            # reinitialize midi in the new range
+            midi = En[Lim1+np.argmax(matrix[Lim1:Lim2,v_index])]
+            
+            # append new parameters to dataframe
+            parsi = np.append(parsi,[midi,vi]).reshape(1,6)
+            dfi = pd.DataFrame(parsi, columns = columns_name)
+            table = pd.concat([table, dfi]).reset_index(drop=True)
+    
     return table
-  
