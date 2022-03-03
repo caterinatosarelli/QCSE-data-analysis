@@ -15,10 +15,11 @@ Vbi being the built-in voltage of the junction and d the thickness of the intrin
 The code is meant to receive two datasets:
 
 1. The intensity map recorded while varying the voltage: each column is correspond to a PL spectrum taken at a certain voltage value.
-Each row contains then the intensity at each voltage value for each energy/wavelength value. Note that this file contains only intensity values, not voltage or energy values.
+Each row contains then the intensity at each voltage value for each energy/wavelength value. Note that this file contains only intensity values, not voltage or energy values. 
+See "Dev1_C3_-2,2to0,6_970nW_960nm_1sec_281stp_pos3.txt" in the repository as example.
 
 2. The grid of the spectrometer, which is not reproducible by using a simple formula so must be taken from a single spectrum file. 
-This type of file contains 3 columns: one for energy values, one for wavelength values and one for counts. From this file the user will take the energy and wavelength values to be used.
+This type of file contains 3 columns: one for energy values, one for wavelength values and one for counts. From this file the user will take the energy and wavelength values to be used. See "gr960nm.txt" in the repository as example.
 
 # Code structure
 The project is divided in 4 main parts:
@@ -47,5 +48,3 @@ To start the analysis the user needs to call main.py giving as input :
 - data filename
 - grid filename
 - save (y/n) , to save plots and results
-
-The repository contains also two examples of dataset : "Dev1_C3_-2,2to0,6_970nW_960nm_1sec_281stp_pos3.txt" is the matrix of the photoluminescence, "gr960nm.txt" is the file containing the grid.
