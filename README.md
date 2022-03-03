@@ -47,3 +47,5 @@ To start the analysis the user needs to call main.py giving as input :
 - data filename
 - grid filename
 - save (y/n) , to save plots and results
+
+The repository contains also two examples of dataset : "Dev1_C3_-2,2to0,6_970nW_960nm_1sec_281stp_pos3.txt" is the matrix of the photoluminescence, "gr960nm.txt" is the file containing the grid.
