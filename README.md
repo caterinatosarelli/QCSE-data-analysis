@@ -27,6 +27,7 @@ The project is divided in 4 main parts:
 * ClickFind.py contains two functions to be able to save position of the mouse clicked as index. The findY function 
 is meant to select the peak the user wants to perform analysis on, clicking on either sides of the peak. The findX is meant 
 to be used when the colormap shows problems in the dataset that do not allow to use the whole voltage range. To interact with the figure, the user needs to set in python Tools/Preferences/Graphics to be QT5.
+* testing.py contains tests of the functions in Functions.py.
 * main.py is the main part of the code. When runned, it needs arguments to create the voltage range used and to import the dataset. 
 After the creation of the colormap and the selection of the ranges, a fitting loop is performed starting from a voltage choosen by the user. 
 A first fit is performed on the spectrum at that voltage and the parameters obtained are then used as starting guess for the spectra in the next voltage value. 
