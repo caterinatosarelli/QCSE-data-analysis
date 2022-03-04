@@ -12,15 +12,15 @@ plt.close('all')
 
 parser = argparse.ArgumentParser(description=("input data"))
 
-parser.add_argument('N_val', type = int, help = 'Number of voltage values', default=281)
-parser.add_argument('Vmin', type = float, help = 'Minimum voltage value used', default=-2.2)
-parser.add_argument('Vmax', type = float, help = 'Maximum voltage value used',default=0.6)
-parser.add_argument('Vbi', type = float, help = 'Built-in voltage',default=1.76)
-parser.add_argument('d', type = float, help = 'Intrinsic region thickness (nm)',default=118)
-parser.add_argument('data_path', type = str, help = 'directory of input data',default='data/')
-parser.add_argument('name_of_file', type = str, help = 'data filename', default='Dev1_C3_-2,2to0,6_970nW_960nm_1sec_281stp_pos3.txt')
-parser.add_argument('grid_shape',type = str, help = 'grid filename', default = 'gr960nm.txt')
-parser.add_argument('saving', type = bool, help = 'save plots', default = True)
+parser.add_argument('--N_val', type = int, help = 'Number of voltage values', default=281)
+parser.add_argument('--Vmin', type = float, help = 'Minimum voltage value used', default=-2.2)
+parser.add_argument('--Vmax', type = float, help = 'Maximum voltage value used',default=0.6)
+parser.add_argument('--Vbi', type = float, help = 'Built-in voltage',default=1.76)
+parser.add_argument('--d', type = float, help = 'Intrinsic region thickness (nm)',default=118)
+parser.add_argument('--data_path', type = str, help = 'directory of input data',default='data/')
+parser.add_argument('--name_of_file', type = str, help = 'data filename', default='Dev1_C3_-2,2to0,6_970nW_960nm_1sec_281stp_pos3.txt')
+parser.add_argument('--grid_shape',type = str, help = 'grid filename', default = 'gr960nm.txt')
+parser.add_argument('--saving', type = bool, help = 'save plots',default = True)
 
 args = parser.parse_args()
 
@@ -83,7 +83,7 @@ zeroPoint = float(input('Type approximate voltage that you want to use to get fi
 Izero = int((zeroPoint-vmin)/dV) #index of starting point
 Vzero = voltage[Izero]
 
-# position of peak
+# position of max. intensity as starting guess for mean
 midi = En[Lim1+np.argmax(matrix[Lim1:Lim2,Izero])]
 
 # perform gaussian fit in the initial point to use parameters as starting guess 
@@ -92,13 +92,13 @@ Gauss_fit = curve_fit(func.gaussian_gen,En[Lim1:Lim2],matrix[Lim1:Lim2,Izero],
                     p0=(100,0.00005,midi,0))
 A0,sigma0,mu0,Bg0 = Gauss_fit[0]
 
-#double check center of peak
-LimC0 = np.where(Wav>=1239.8/mu0)[0][0]
-midi = En[LimC0]
-LimDel = -10*(np.where(Wav>=1239.8/(midi+sigma0))[0][0] - LimC0)
+#double check center of peak with new parameters taken from the first fit
+midi = func.peak_lim(Wav,mu0,0)[0]
+Lim1 = func.peak_lim(Wav,midi,sigma0)[1]
+Lim2 = func.peak_lim(Wav,midi,sigma0)[2]
 
-Gauss_fit = curve_fit(func.gaussian_gen,En[LimC0-LimDel:LimC0+LimDel],
-                    matrix[LimC0-LimDel:LimC0+LimDel,Izero],
+Gauss_fit = curve_fit(func.gaussian_gen,En[Lim1:Lim2],
+                    matrix[Lim1:Lim2,Izero],
                     p0=(200,sigma0,midi,0))
 A0,sigma0,mu0,Bg0 = Gauss_fit[0]
 
