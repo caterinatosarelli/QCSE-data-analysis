@@ -59,11 +59,15 @@ def gaussian_gen(x,Amp,sig,mu,Bg):
 
     Parameters
     ----------
-    x, Amp, sig, mu, Bg
+    x : array of energy values
+    Amp : float, amplitude of curve
+    sig : float, standard deviation
+    mu : float, mean
+    Bg : float, background
     
     Returns
     -------
-    Bg + Amp * exp(-(x-mu)^2/sig^2)
+    array of float following the formula : Bg + Amp * exp(-(x-mu)^2/sig^2)
 
     """
     return(Bg + Amp*np.exp(-np.power(x-mu,2.)/(2*np.power(sig,2.))))
@@ -75,11 +79,14 @@ def polynom2(x,a0,a1,a2):
 
     Parameters
     ----------
-    x, a0, a1, a2
+    x: array of float
+    a0 : intercept
+    a1 : coefficient of x
+    a2 : coefficient of x^2
 
     Returns
     -------
-    a0 + a1 * x + a2 * x^2
+    array of float following the formula : a0 + a1 * x + a2 * x^2
 
     """
     return(a0 + a1*x + a2*np.power(x,2.))
@@ -98,17 +105,17 @@ def map_plot(Matrix,Fig,X,Y,Xmin,Xmax,Ymin,Ymax,Imin,Imax,Xlabel,Ylabel):
     Parameters
     ----------
     Matrix : data of the sweep
-    Fig : name of the figure
-    X : values of x axis
-    Y : values of y axis
+    Fig : str, name of the figure
+    X : float, values of x axis (voltage)
+    Y : float, values of y axis (energy)
     Xmin : index of min x value
     Xmax : index of max x value 
     Ymin : index of max y value
     Ymax : index of max y value
-    Imin : min intensity level in the colorbar
-    Imax : max intensity level in the colorbar
-    Xlabel : name of x axis
-    Ylabel : name of y axis
+    Imin : int, min intensity level in the colorbar
+    Imax : int, max intensity level in the colorbar
+    Xlabel : str, name of x axis
+    Ylabel : str, name of y axis
 
     Returns
     -------
@@ -129,16 +136,53 @@ def map_plot(Matrix,Fig,X,Y,Xmin,Xmax,Ymin,Ymax,Imin,Imax,Xlabel,Ylabel):
     return fig
 
 #%%
-def peak_lim(wav, peak_pos, sigma) : 
+def peak_lim(wav, en, peak_pos, sigma) : 
+    """
+    This function finds the index at which the wavelength value corresponds to the 
+    energy value given as input, following the conversion wav(nm) = 1239.8/en(eV). 
+    It also finds two points distant 10*sigma from peak position.
+
+    Parameters
+    ----------
+    wav : array of wavelength values 
+    peak_pos : float, energy value taken by gauss. fit
+    sigma : float, sigma value taken by gauss. fit, can be used to find index of mu+sigma
+    
+    Returns
+    -------
+    pos : int, index at which wav(nm)=1239.8/en(eV)
+    lim1 : int, lower limit of range around peak pos.
+    lim2 : int, upper limit of range aroung peak pos.
+
+    """
 
     pos = np.where(wav>=1239.8/peak_pos)[0][0]
+    midi = en[pos]
     delta = -10 * (np.where(wav>=1239.8/(peak_pos+sigma))[0][0] - pos)
     lim1 = pos - delta
     lim2 = pos + delta
     
-    return pos, lim1, lim2
+    return midi, lim1, lim2
 #%%
 def direction(forward, Izero, voltage, vlim, i):
+    """
+    This function sets parameters to be used in fit_loop function.
+
+    Parameters
+    ----------
+    forward : bool, set direction in which the fit is performed along voltage array
+    Izero : int, index of voltage as starting point for the loop
+    voltage : array of voltage values
+    vlim : float, limit of voltage range selected
+    i : int, value of the iterable variable of the loop
+
+    Returns
+    -------
+    v_index : int, index of current voltage value
+    vi : float, value of current voltage
+    end : bool, true if out of the voltage range selected
+
+    """
    
     if forward:
         v_index = Izero+i+1
@@ -151,9 +195,28 @@ def direction(forward, Izero, voltage, vlim, i):
         end = vi<(np.round(voltage[vlim],2))
         
     return v_index, vi, end
-    
+
 #%%        
 def fit_loop(Izero, voltage, VLim, params, spectrum, matrix, forward):
+    """
+    This function performes a series of gaussian fit in matrix of data over 
+    the voltage range selected.
+
+    Parameters
+    ----------
+    Izero : int, index of voltage starting point of the loop
+    voltage : array of voltage values
+    VLim : int, index of limit of voltage range
+    params : array with starting parameters for gaussian fit
+    spectrum : dataframe containing energy and wavelength arrays
+    matrix : matrix of intensity values
+    forward : bool, defines the direction of the loop from the starting point
+
+    Returns
+    -------
+    table : dataframe containing parameters from fit for every voltage value in the range.
+
+    """
     
     v0 = voltage[Izero]
     Wav = spectrum[:,0]
@@ -161,9 +224,9 @@ def fit_loop(Izero, voltage, VLim, params, spectrum, matrix, forward):
     
     A, sigma, mu, bg = params
 
-    LimC0 = peak_lim(Wav, mu, 0)[0]
-    midi = En[LimC0] 
-    fit_vals=[[A,sigma,mu,bg,midi,v0]]
+    # LimC0 = peak_lim(Wav, mu, 0)[0]
+    midi = peak_lim(Wav, En, mu, 0)[0] 
+    fit_vals=[[A, sigma, mu, bg, midi, v0]]
     columns_name = ('A','sigma','mu','Bg','mid','vfit')
     table = pd.DataFrame(fit_vals, columns=columns_name)
 
@@ -180,10 +243,10 @@ def fit_loop(Izero, voltage, VLim, params, spectrum, matrix, forward):
                 midi = table['mid'][i]
             else:
                 midi = table['mu'][i]
-            try:
-                # redefines energy range of the peak to be fitted
+                # redefines energy range of the peak to be fitted using sigma
                 Lim1 = peak_lim(Wav,midi,table['sigma'][i])[1]
                 Lim2 = peak_lim(Wav,midi,table['sigma'][i])[2]
+            try:
                 Gauss_fit = curve_fit(gaussian_gen,En[Lim1:Lim2],matrix[Lim1:Lim2,v_index],
                                       p0=(table['A'][i],table['sigma'][i],midi,0),
                                       )
