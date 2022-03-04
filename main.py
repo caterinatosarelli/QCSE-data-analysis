@@ -45,7 +45,7 @@ En = spectrum[:,1]
 
 #%% plot the data in a colormap
 
-colormap = func.MapPlot(matrix, 'Map', voltage, Wav, 0, -1, 0, -1, 0, 600, 
+colormap = func.map_plot(matrix, 'Map', voltage, Wav, 0, -1, 0, -1, 0, 600, 
         'Voltage(V)', 'Wavelength(nm)')
 
 if save:
@@ -56,7 +56,7 @@ if save:
 Zoom_map, Lim1, Lim2 = click.findY(colormap,Wav,matrix)
 plt.close(colormap) 
 
-func.MapPlot(Zoom_map, 'Zoom', voltage, Wav, 0, -1, Lim1, Lim2, 
+func.map_plot(Zoom_map, 'Zoom', voltage, Wav, 0, -1, Lim1, Lim2, 
         0, 800, 'Voltages(V)', 'Wavelength(nm)')
 
 plt.close('Map')
@@ -93,9 +93,9 @@ Gauss_fit = curve_fit(func.gaussian_gen,En[Lim1:Lim2],matrix[Lim1:Lim2,Izero],
 A0,sigma0,mu0,Bg0 = Gauss_fit[0]
 
 #double check center of peak with new parameters taken from the first fit
-midi = func.peak_lim(Wav,mu0,0)[0]
-Lim1 = func.peak_lim(Wav,midi,sigma0)[1]
-Lim2 = func.peak_lim(Wav,midi,sigma0)[2]
+midi = func.peak_lim(Wav,En,mu0,0)[0]
+Lim1 = func.peak_lim(Wav,En,midi,sigma0)[1]
+Lim2 = func.peak_lim(Wav,En,midi,sigma0)[2]
 
 Gauss_fit = curve_fit(func.gaussian_gen,En[Lim1:Lim2],
                     matrix[Lim1:Lim2,Izero],
