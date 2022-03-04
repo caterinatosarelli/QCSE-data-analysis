@@ -174,7 +174,7 @@ def direction(forward, Izero, voltage, vlim, i):
     Izero : int, index of voltage as starting point for the loop
     voltage : array of voltage values
     vlim : float, limit of voltage range selected
-    i : int, value of the iterable variable of the loop
+    i : index of loop
 
     Returns
     -------
@@ -195,6 +195,52 @@ def direction(forward, Izero, voltage, vlim, i):
         end = vi<(np.round(voltage[vlim],2))
         
     return v_index, vi, end
+
+#%%
+
+def gauss_fit(gauss_f, en, wav, midi, matrix, dataframe, i, v_val):
+    """
+    This function performs a gaussian fit over a speific range and returns 
+    the parameters obtained. If the fit fails, it returns an array of zeros.
+
+    Parameters
+    ----------
+    gauss_func : gaussian function to perform the fit
+    en : array of energy values
+    wav : array of wavelength values
+    midi : mean of the peak from precedent fit
+    matrix : matrix of pl intensity
+    arr_A : array of amplitude values from dataframe of parameters
+    arr_sigma : array of sigma values from dataframe of parameters
+    i : index of loop
+    v_val : array containing index of current voltage, value of current voltage and 
+            bool value indicating direction of loop
+
+    Returns
+    -------
+    midi : updated value of energy at which the intensity is max over the range
+    parsi : array containing parameters of gaussian fit
+
+    """
+    
+    # redifine new limit for the fit
+    Lim1 = peak_lim(wav,en,midi,dataframe['sigma'][i])[1]
+    Lim2 = peak_lim(wav,en,midi,dataframe['sigma'][i])[2]
+    
+    try:
+        Gauss_fit = curve_fit(gauss_f, en[Lim1:Lim2],matrix[Lim1:Lim2,v_val[0]],
+                          p0=(dataframe['A'][i],dataframe['sigma'][i],midi,0),
+                          )
+        parsi = Gauss_fit[0]
+        
+    except RuntimeError:
+        print(v_val[1],'V errori in fit - just use peak')
+        parsi = [0,0,0,0]
+        
+    midi = en[Lim1 + np.argmax(matrix[Lim1:Lim2,v_val[0]])]
+    parsi = np.append(parsi,[midi,v_val[1]]).reshape(1,6)
+    
+    return midi, parsi
 
 #%%        
 def fit_loop(Izero, voltage, VLim, params, spectrum, matrix, forward):
@@ -224,7 +270,6 @@ def fit_loop(Izero, voltage, VLim, params, spectrum, matrix, forward):
     
     A, sigma, mu, bg = params
 
-    # LimC0 = peak_lim(Wav, mu, 0)[0]
     midi = peak_lim(Wav, En, mu, 0)[0] 
     fit_vals=[[A, sigma, mu, bg, midi, v0]]
     columns_name = ('A','sigma','mu','Bg','mid','vfit')
@@ -232,8 +277,9 @@ def fit_loop(Izero, voltage, VLim, params, spectrum, matrix, forward):
 
     for i in range(len(voltage)):
         
-        v_index, vi, end = direction(forward, Izero, voltage, VLim, i)
+        v_val = direction(forward, Izero, voltage, VLim, i)
         
+        end = v_val[2]
         if end :
             print('End of selected voltage range')
             break
@@ -243,25 +289,17 @@ def fit_loop(Izero, voltage, VLim, params, spectrum, matrix, forward):
                 midi = table['mid'][i]
             else:
                 midi = table['mu'][i]
-                # redefines energy range of the peak to be fitted using sigma
-                Lim1 = peak_lim(Wav,midi,table['sigma'][i])[1]
-                Lim2 = peak_lim(Wav,midi,table['sigma'][i])[2]
-            try:
-                Gauss_fit = curve_fit(gaussian_gen,En[Lim1:Lim2],matrix[Lim1:Lim2,v_index],
-                                      p0=(table['A'][i],table['sigma'][i],midi,0),
-                                      )
-                parsi = Gauss_fit[0]
                 
-            except RuntimeError: 
-                print(vi,'V error in fit - just use peak')
-                parsi = [0,0,0,0]
+            # initialize parameters with results from gaussian fit
+            midi, parsi = gauss_fit(gaussian_gen, En, Wav, midi, matrix, 
+                                    table, i, v_val)
             
-            # reinitialize midi in the new range
-            midi = En[Lim1+np.argmax(matrix[Lim1:Lim2,v_index])]
-            
-            # append new parameters to dataframe
-            parsi = np.append(parsi,[midi,vi]).reshape(1,6)
+            #append to dataframe
             dfi = pd.DataFrame(parsi, columns = columns_name)
             table = pd.concat([table, dfi]).reset_index(drop=True)
     
     return table
+
+
+    
+        
